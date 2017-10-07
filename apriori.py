@@ -4,19 +4,18 @@ from itertools import combinations
 from functools import reduce
 import time
 
-#Apriori done for now. Need to cut the dependence on dataframes.
-#Also, the "set" and "list" transfers, they may cost extra time.
+#Apriori done for now. Independent on the dataframe structure.
 def apriori(D, min_sup):
     L = []
     # 1-itemset
-    tmp = pd.concat([df[x] for x in df]).value_counts()
-    L.append([[x] for x in tmp.index if tmp[x] > min_sup])
+    sup_cnt = pd.Series(reduce((lambda x, y: x + y), D)).value_counts()
+    L.append([[x] for x in sup_cnt.index if sup_cnt[x] > min_sup])
     while len(L[-1]) > 0:
         Lk = []
         C = apriori_gen(L[-1])
         for c in C:
             count = 0
-            for _, t in df.iterrows():
+            for t in df:
                 if set(c).issubset(set(t)):
                     count += 1
             if count >= min_sup:
@@ -40,13 +39,6 @@ def has_infreq_subset(c, L):
         if list(s) not in L: 
             return True
     return False
-            
-
-def fp_growth(*args, **kwds):
-    return 
-
-def improve_apriori(*args, **kwds):
-    return
 
 
 if __name__ == "__main__":
@@ -54,10 +46,12 @@ if __name__ == "__main__":
     start = time.time()
     
     df = pd.read_csv("adult.data", sep = ", ", header = None, engine = "python")
-    df.columns = ["age", "workclass", "fnlwgt", "education", "education-num",\
-            "marital-status", "occupation", "relationship", "race", "sex",\
-            "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
+#    df.columns = ["age", "workclass", "fnlwgt", "education", "education-num",\
+#            "marital-status", "occupation", "relationship", "race", "sex",\
+#            "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
     
+    df = df.values.tolist()  #Convert it to list, saves a lot of time.
+
     L = apriori(df, min_sup = len(df) * 0.6)[:-1] #The last one is empty set, so drop it.
     print(reduce((lambda x, y: x + y), L))
 
