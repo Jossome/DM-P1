@@ -8,17 +8,21 @@ import time
 def apriori(D, min_sup):
     L = []
     # 1-itemset
-    start = time.time()
-    sup_cnt = pd.Series(reduce((lambda x, y: x + y), D)).value_counts()
-    print("Runtime:", round(time.time() - start, 2), "seconds.")
+    tmp = []
+    for col in D.columns:
+        col_cnt = df[col].value_counts()
+        col_cnt.index = [(x, col) for x in col_cnt.index]
+        tmp.append(col_cnt)
+    sup_cnt = pd.concat(tmp).sort_values(ascending = False)
+    
     L.append([[x] for x in sup_cnt.index if sup_cnt[x] > min_sup])
     while len(L[-1]) > 0:
         Lk = []
         C = apriori_gen(L[-1])
         for c in C:
             count = 0
-            for t in df:
-                if set(c).issubset(set(t)):
+            for _, t in df.iterrows():
+                if set(c).issubset(zip(list(t), t.index)):
                     count += 1
             if count >= min_sup:
                 Lk.append(c)
@@ -51,11 +55,6 @@ if __name__ == "__main__":
     df.columns = ["age", "workclass", "fnlwgt", "education", "education-num",\
             "marital-status", "occupation", "relationship", "race", "sex",\
             "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
-
-    for col in df.columns:  #Make distinguish tags, so that two differen
-        df[col] = [(df[col][i], col) for i in range(len(df))]
-        
-    df = df.values.tolist()  #Convert it to list, saves a lot of time.
 
     L = apriori(df, min_sup = len(df) * 0.8)[:-1] #The last one is empty set, so drop it.
     print(reduce((lambda x, y: x + y), L))
