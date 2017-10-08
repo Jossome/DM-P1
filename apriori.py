@@ -8,7 +8,9 @@ import time
 def apriori(D, min_sup):
     L = []
     # 1-itemset
+    start = time.time()
     sup_cnt = pd.Series(reduce((lambda x, y: x + y), D)).value_counts()
+    print("Runtime:", round(time.time() - start, 2), "seconds.")
     L.append([[x] for x in sup_cnt.index if sup_cnt[x] > min_sup])
     while len(L[-1]) > 0:
         Lk = []
@@ -46,13 +48,16 @@ if __name__ == "__main__":
     start = time.time()
     
     df = pd.read_csv("adult.data", sep = ", ", header = None, engine = "python")
-#    df.columns = ["age", "workclass", "fnlwgt", "education", "education-num",\
-#            "marital-status", "occupation", "relationship", "race", "sex",\
-#            "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
-    
+    df.columns = ["age", "workclass", "fnlwgt", "education", "education-num",\
+            "marital-status", "occupation", "relationship", "race", "sex",\
+            "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
+
+    for col in df.columns:  #Make distinguish tags, so that two differen
+        df[col] = [(df[col][i], col) for i in range(len(df))]
+        
     df = df.values.tolist()  #Convert it to list, saves a lot of time.
 
-    L = apriori(df, min_sup = len(df) * 0.6)[:-1] #The last one is empty set, so drop it.
+    L = apriori(df, min_sup = len(df) * 0.8)[:-1] #The last one is empty set, so drop it.
     print(reduce((lambda x, y: x + y), L))
 
     print("Runtime:", round(time.time() - start, 2), "seconds.")
