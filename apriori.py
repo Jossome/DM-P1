@@ -19,24 +19,22 @@ def apriori(D, min_sup):
     while len(L[-1]) > 0:
         Lk = []
         C = apriori_gen(L[-1])
-        for c in C:
-            count = 0
-            for _, t in df.iterrows():
+        for _, t in df.iterrows():
+            for c in C:
                 if set(c).issubset(zip(list(t), t.index)):
-                    count += 1
-            if count >= min_sup:
-                Lk.append(c)
+                    C[c] += 1
+        Lk = [c for c in C if C[c] >= min_sup]
         L.append(Lk)
     return L
     
 def apriori_gen(L):
-    C = []
+    C = {}
     for l1 in L:
         for l2 in L:
             if all([l1[i] == l2[i] for i in range(len(l1) - 1)]) and str(l1[-1]) < str(l2[-1]):
-                c = list(set(l1).union(set(l2)))
+                c = tuple(set(l1).union(set(l2)))
                 if has_infreq_subset(c, L): pass
-                else: C.append(c)
+                else: C[c] = 0
     return C
     
 def has_infreq_subset(c, L):
@@ -56,7 +54,7 @@ if __name__ == "__main__":
             "marital-status", "occupation", "relationship", "race", "sex",\
             "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
 
-    L = apriori(df, min_sup = len(df) * 0.8)[:-1] #The last one is empty set, so drop it.
+    L = apriori(df, min_sup = len(df) * 0.6)[:-1] #The last one is empty set, so drop it.
     print(reduce((lambda x, y: x + y), L))
 
     print("Runtime:", round(time.time() - start, 2), "seconds.")
