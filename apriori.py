@@ -20,8 +20,9 @@ def apriori(D, min_sup):
     while len(L[-1]) > 0:
         C = apriori_gen(L[-1])
         for _, t in df.iterrows():
+            row = zip(t.index, list(t))
             for c in C:
-                if set(c).issubset(zip(t.index, list(t))):
+                if set(c).issubset(row):
                     C[c] += 1
         Lk = [c for c in C if C[c] >= min_sup]
         L.append(Lk)
@@ -33,7 +34,8 @@ def apriori_gen(L):
         for l2 in L:
             if l1[:-1] == l2[:-1] and str(l1[-1]) < str(l2[-1]):
                 #Tuple is hashable as index in dict, but there are sequence issues.
-                c = tuple(sorted(set(l1).union(set(l2)), key = str))
+                #c = tuple(sorted(set(l1).union(set(l2)), key = str))
+                c = l1 + (l2[-1],)
                 if has_infreq_subset(c, L): pass
                 else: C[c] = 0
     return C
@@ -54,7 +56,7 @@ if __name__ == "__main__":
             "marital-status", "occupation", "relationship", "race", "sex",\
             "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
 
-    L = apriori(df, min_sup = len(df) * 0.8)
+    L = apriori(df, min_sup = len(df) * 0.6)
     print(reduce((lambda x, y: x + y), L))
 
     print("Runtime:", round(time.time() - start, 2), "seconds.")
