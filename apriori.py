@@ -31,7 +31,7 @@ def apriori_gen(L):
     C = {}
     for l1 in L:
         for l2 in L:
-            if all([l1[i] == l2[i] for i in range(len(l1) - 1)]) and str(l1[-1]) < str(l2[-1]):
+            if l1[:-1] == l2[:-1] and str(l1[-1]) < str(l2[-1]):
                 #Tuple is hashable as index in dict, but there are sequence issues.
                 c = tuple(sorted(set(l1).union(set(l2)), key = str))
                 if has_infreq_subset(c, L): pass
