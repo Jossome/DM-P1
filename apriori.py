@@ -4,24 +4,23 @@ from itertools import combinations
 from functools import reduce
 import time
 
-#Apriori done for now. Independent on the dataframe structure.
 def apriori(D, min_sup):
     L = []
     # 1-itemset
     tmp = []
     for col in D.columns:
         col_cnt = df[col].value_counts()
-        col_cnt.index = [(x, col) for x in col_cnt.index]
+        col_cnt.index = [(col, x) for x in col_cnt.index]
         tmp.append(col_cnt)
     sup_cnt = pd.concat(tmp).sort_values(ascending = False)
     
-    L.append([[x] for x in sup_cnt.index if sup_cnt[x] > min_sup])
+    L.append([(x,) for x in sup_cnt.index if sup_cnt[x] > min_sup])
     while len(L[-1]) > 0:
         Lk = []
         C = apriori_gen(L[-1])
         for _, t in df.iterrows():
             for c in C:
-                if set(c).issubset(zip(list(t), t.index)):
+                if set(c).issubset(zip(t.index, list(t))):
                     C[c] += 1
         Lk = [c for c in C if C[c] >= min_sup]
         L.append(Lk)
@@ -40,7 +39,7 @@ def apriori_gen(L):
 def has_infreq_subset(c, L):
     for s in combinations(c, len(c) - 1):  #generate each subset s of c
         #print(s)
-        if list(s) not in L: 
+        if s not in L: 
             return True
     return False
 
