@@ -5,24 +5,53 @@ from functools import reduce
 import time
 
 class tree:
-    def __init__(self， name, children = []):
+    def __init__(self, name):
         self.name = name
         self.count = 1
-        self.children = list(children)
-    
+        self.children = {}
+        
 
-def fp_growth(tree, D):
-    return L
+def traverse(T):
+    if len(T.children) == 0:
+        print(T.name, " : ", T.count)
+        return 
+    else:
+        print(T.name, " : ", T.count)
+        for each in T.children:
+            print("Parent: ", T.name)
+            traverse(T.children[each])
+        print("===========")
+
+def find_freq_1_itemset(D):
+    tmp = []
+    for col in D.columns:
+        col_cnt = D[col].value_counts()
+        col_cnt.index = [(col, x) for x in col_cnt.index]
+        tmp.append(col_cnt)
+    return pd.concat(tmp)
+
+def fp_growth(fp_tree, D):
+    return
+
+def insert_tree(row, T):
+    if len(row) == 0: return T
+    
+    if row[0] not in T.children:
+        T.children[row[0]] = tree(row[0])
+    else:
+        T.children[row[0]].count += 1
+        
+    insert_tree(row[1:], T.children[row[0]])
 
 def tree_gen(D):
-    sup_cnt = pd.Series(reduce((lambda x, y: x + y), D)).value_counts()
-    sort_key = {name: i for i, name in enumerate(sup_cnt.index)}  #Generating the key is too costy
-    root = {"node": None, "count": 0, "child": []}
-    for t in D:
-        this = sorted(t, key = sort_key)
-        root["child"].append()
+    sup_cnt = find_freq_1_itemset(D)
+    sort_key = {name: i for i, name in enumerate(sup_cnt.index)} 
+    fp_tree = tree("null")
+    for _, t in D.iterrows():
+        row = sorted(zip(t.index, list(t)), key = lambda x: sort_key[x], reverse = True)
+        insert_tree(row, fp_tree)
         
-    return sort_key
+    return fp_tree
     
 
 if __name__ == "__main__":
@@ -30,11 +59,10 @@ if __name__ == "__main__":
     start = time.time()
     
     df = pd.read_csv("adult.data", sep = ", ", header = None, engine = "python")
-    df = df.values.tolist()
+    df.columns = ["age", "workclass", "fnlwgt", "education", "education-num",\
+            "marital-status", "occupation", "relationship", "race", "sex",\
+            "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
 
-    print(tree_gen(df))
-    
-#    L = fp_growth(tree_gen(df), None) 
-#    print(reduce((lambda x, y: x + y), L))
-
+    ttt = tree_gen(df[:10])
+    traverse(ttt)
     print("Runtime:", round(time.time() - start, 2), "seconds.")
