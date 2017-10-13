@@ -7,7 +7,7 @@ import time
 def find_freq_1_itemset(D):
     tmp = []
     for col in D.columns:
-        col_cnt = df[col].value_counts()
+        col_cnt = D[col].value_counts()
         col_cnt.index = [(col, x) for x in col_cnt.index]
         tmp.append(col_cnt)
     return pd.concat(tmp)
@@ -19,7 +19,7 @@ def apriori(D, min_sup):
     L.append([(x,) for x in sup_cnt.index if sup_cnt[x] >= min_sup])
     while len(L[-1]) > 0:
         C = apriori_gen(L[-1])
-        for _, t in df.iterrows():
+        for _, t in D.iterrows():
             #In python3, zip returns a generator, rather than an object as in python2.
             row = set(zip(t.index, list(t)))
             for c in C:
