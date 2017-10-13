@@ -20,7 +20,7 @@ def apriori(D, min_sup):
     while len(L[-1]) > 0:
         C = apriori_gen(L[-1])
         for _, t in df.iterrows():
-            row = zip(t.index, list(t))
+            row = set(zip(t.index, list(t)))
             for c in C:
                 if set(c).issubset(row):
                     C[c] += 1
