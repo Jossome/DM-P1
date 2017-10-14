@@ -38,14 +38,23 @@ def insert_tree(row, T):
     
     if row[0] not in T.children:
         T.children[row[0]] = tree(row[0], T.trace + "->" + str(T.name))
+        tag = T.children[row[0]] # Make a reference
         try:
-            node_link[T.children[row[0]].name].append(T.children[row[0]].trace)
+            node_link[T.children[row[0]].name].append(tag)
         except Exception:
-            node_link[T.children[row[0]].name] = [T.children[row[0]].trace]
+            node_link[T.children[row[0]].name] = [tag]
     else:
         T.children[row[0]].count += 1
         
     insert_tree(row[1:], T.children[row[0]])
+
+def get_CFP(item):
+    for each in item:
+        return
+    
+def fp_gen(CPB, CFP):
+    return
+
 
 def fp_growth(D, min_sup):
     sup_cnt = find_freq_1_itemset(D)
@@ -56,9 +65,15 @@ def fp_growth(D, min_sup):
         insert_tree(row, fp_tree)
 
     #----------fp-tree constructed-----------------
-    freq1 = sorted([(x, sup_cnt[x]) for x in sup_cnt.index if sup_cnt[x] >= min_sup], key = lambda x: sort_key[x[0]])
-    
-    return freq1
+    freq1 = sorted([x for x in sup_cnt.index if sup_cnt[x] >= min_sup], key = lambda x: sort_key[x])
+    L = freq1[:]
+    for item in freq1[:-1]:
+        CPB = [(x.trace.split('->')[2:], x.count) for x in node_link[item]]
+        print(CPB)
+        CFP = get_CFP(item)
+        FPG = fp_gen(CPB, CFP)
+        L += FPG
+    return L
 
 
 if __name__ == "__main__":
@@ -71,6 +86,5 @@ if __name__ == "__main__":
             "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
 
     ttt = fp_growth(df, len(df) * 0.8)
-    print(ttt)
     #traverse(ttt)
     print("Runtime:", round(time.time() - start, 2), "seconds.")
