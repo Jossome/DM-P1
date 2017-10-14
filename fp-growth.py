@@ -4,6 +4,8 @@ from itertools import combinations
 from functools import reduce
 import time
 
+node_link = {}
+
 class tree:
     def __init__(self, name, trace):
         self.name = name
@@ -36,25 +38,27 @@ def insert_tree(row, T):
     
     if row[0] not in T.children:
         T.children[row[0]] = tree(row[0], T.trace + "->" + str(T.name))
+        try:
+            node_link[T.children[row[0]].name].append(T.children[row[0]].trace)
+        except Exception:
+            node_link[T.children[row[0]].name] = [T.children[row[0]].trace]
     else:
         T.children[row[0]].count += 1
         
     insert_tree(row[1:], T.children[row[0]])
 
-def tree_gen(D):
+def fp_growth(D, min_sup):
     sup_cnt = find_freq_1_itemset(D)
-    sort_key = {name: i for i, name in enumerate(sup_cnt.index)} 
+    sort_key = {name: sup_cnt[name] for name in sup_cnt.index} 
     fp_tree = tree("null", "")
     for _, t in D.iterrows():
         row = sorted(zip(t.index, list(t)), key = lambda x: sort_key[x], reverse = True)
         insert_tree(row, fp_tree)
-        
-    return fp_tree
-    
-def fp_growth(fp_tree, D):
-    
-    return
 
+    #----------fp-tree constructed-----------------
+    freq1 = sorted([(x, sup_cnt[x]) for x in sup_cnt.index if sup_cnt[x] >= min_sup], key = lambda x: sort_key[x[0]])
+    
+    return freq1
 
 
 if __name__ == "__main__":
@@ -66,6 +70,7 @@ if __name__ == "__main__":
             "marital-status", "occupation", "relationship", "race", "sex",\
             "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
 
-    ttt = tree_gen(df[:10])
-    traverse(ttt)
+    ttt = fp_growth(df, len(df) * 0.8)
+    print(ttt)
+    #traverse(ttt)
     print("Runtime:", round(time.time() - start, 2), "seconds.")
