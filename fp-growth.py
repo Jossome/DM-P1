@@ -57,14 +57,13 @@ def tree_gen(D, min_sup, sort_key):
     return fp_tree, node_link
 
 
-def have_single_path(CPB):
-    for each in combinations([x[0] for x in CPB], 2):
-        if len(each[0].split('->')) < len(each[1].split('->')):
-            if each[1].startswith(each[0]): return False
-        elif len(each[0].split('->')) > len(each[1].split('->')):
-            if each[0].startswith(each[1]): return False
-    
-    return True
+def have_single_path(T):
+    tmp = T
+    while 1:
+        if len(tmp.children) > 1: return False, tmp.name
+        elif len(tmp.children) == 1: tmp = tmp.children[list(tmp.children.keys())[0]]
+        else: return True, tmp.name
+    #return True
 
 def insert_CFP(row, T, node_link, cnt):
     if len(row) == 0: return T, node_link
@@ -86,27 +85,22 @@ def get_CFP(CPB, min_sup):
     node_link = {}
     CFP = tree("null", "")
     for each in CPB:
-        print(each)
+        #print(each)
         row = [eval(x) for x in each[0].split('->')]
         insert_CFP(row, CFP, node_link, each[1])
     return CFP, node_link
-        
-def fp_growth(D, min_sup, first = False):
-    if first: 
-        sup_cnt = find_freq_1_itemset(D)
-        sort_key = {name: sup_cnt[name] for name in sup_cnt.index}
-    else: 
-        sup_cnt = D
-        sort_key = {name: sup_cnt[name] for name in sup_cnt.index}
-    
-    fp_tree, node_link = tree_gen(D, min_sup, sort_key)
-    
-    freq1 = sorted([x for x in sup_cnt.index if sup_cnt[x] >= min_sup], key = lambda x: sort_key[x])
-    L = freq1[:]
-    
-    for item in freq1[:-1]:
+
+def recursive(freq1, node_link, min_sup, first = False):
+    res = []
+
+    if first: freq1 = freq1[:-1]
+    for item in freq1:
         CPB = [(x.trace[8:], x.count) for x in node_link[item] if x.trace != '->null']
         CFP, local_link = get_CFP(CPB, min_sup)
+        print("gaggefaecac", have_single_path(CFP))
+        
+        print("item: ", item)
+        print("CPB : ", CPB)
         
         #local de sup_cnt
         local_cnt = [(each, reduce((lambda x, y: x + y), [i.count for i in local_link[each]])) for each in local_link]
@@ -116,15 +110,26 @@ def fp_growth(D, min_sup, first = False):
         local_key = {name: cnt for name, cnt in local_cnt}
         print(local_key)
         local_freq = sorted([x[0] for x in local_cnt if x[1] >= min_sup], key = lambda x: local_key[x])
-        print(local_freq)
-       #while not have_single_path(CPB):
+        #if len(local_freq) == 0: return [item]
+        print("local_freq : ", local_freq)
+        tmp = recursive(local_freq, local_link, min_sup)
+        if len(tmp) == 0:
+            res.append((item,))
+        else: 
+            for each in tmp:
+                res.append((item,) + each)  #without this one, the tmp will be empty!!!
 
-        
-        traverse(CFP)
-        return local_link
+        print("res[]-1 : ", res[-1])
     
-        FPG = fp_gen(CFP)
-        #L += FPG
+    return res
+ 
+def fp_growth(df, min_sup):
+    sup_cnt = find_freq_1_itemset(df)
+    sort_key = {name: sup_cnt[name] for name in sup_cnt.index}
+    fp_tree, node_link = tree_gen(df, min_sup, sort_key)
+    freq1 = sorted([x for x in sup_cnt.index if sup_cnt[x] >= min_sup], key = lambda x: sort_key[x])
+    L = [(x,) for x in freq1]
+    L += recursive(freq1, node_link, min_sup, first = True)
     return L
 
 
@@ -137,8 +142,8 @@ if __name__ == "__main__":
             "marital-status", "occupation", "relationship", "race", "sex",\
             "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
 
-    ttt = fp_growth(df, len(df) * 0.8, first = True)
-    
+    ttt = fp_growth(df, len(df) * 0.6)
+    print(len(ttt))
 #    for each in ttt:
 #        print(each)
 #        for i in ttt[each]:
