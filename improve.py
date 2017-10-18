@@ -8,37 +8,44 @@ def find_freq_1_itemset(D):
     tmp = []
     for col in D.columns:
         col_cnt = D[col].value_counts()
+        for each in col_cnt.index:
+            col_cnt[each] = (col_cnt[each], set(D.index[D.loc[:, col] == each]))
         col_cnt.index = [(col, x) for x in col_cnt.index]
         tmp.append(col_cnt)
     return pd.concat(tmp)
 
 def apriori(D, min_sup):
     L = []
+    I = []
     sup_cnt = find_freq_1_itemset(D)
     
-    L.append([(x,) for x in sup_cnt.index if sup_cnt[x] >= min_sup])
-    while len(L[-1]) > 0:
-        C = apriori_gen(L[-1])
-        for _, t in D.iterrows():
-            #In python3, zip returns a generator, rather than an object as in python2.
-            row = set(zip(t.index, list(t)))
-            for c in C:
-                if set(c).issubset(row):
-                    C[c] += 1
-        Lk = [c for c in C if C[c] >= min_sup]
+    L.append([(x,) for x in sup_cnt.index if sup_cnt[x][0] >= min_sup])
+    k = 1
+    I.append([sup_cnt[x][1] for x in sup_cnt.index if sup_cnt[x][0] >= min_sup])
+    Last = []
+    while L[-1] != Last:
+        Last = L[-1]
+        C = apriori_gen(L[-1], I[-1], min_sup, k)
+        k += 1
+        Lk = []
+        Ik = []
+        for key in C:
+            Lk.append(key)
+            Ik.append(C[key])
+        
         L.append(Lk)
+        I.append(Ik)
     return L
     
-def apriori_gen(L):
+def apriori_gen(L, I, min_sup, k):
     C = {}
-    for l1 in L:
-        for l2 in L:
-            if l1[:-1] == l2[:-1] and str(l1[-1]) < str(l2[-1]):
-                #Tuple is hashable as index in dict, but there are sequence issues.
-                #c = tuple(sorted(set(l1).union(set(l2)), key = str))
-                c = l1 + (l2[-1],) # We won't bother the sequence issue, just add the last one.
-                if has_infreq_subset(c, L): pass
-                else: C[c] = 0
+    for i in range(len(I)):
+        for j in range(len(I)):
+            if len(L[i]) != k or len(L[j]) != k: continue
+            tmp = I[i].intersection(I[j])
+            if len(tmp) >= min_sup:
+                c = tuple(sorted(set(L[i]).union(set(L[j])), key = str))
+                C[c] = tmp            
     return C
     
 def has_infreq_subset(c, L):
@@ -57,13 +64,15 @@ if __name__ == "__main__":
             "marital-status", "occupation", "relationship", "race", "sex",\
             "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
 
-    min_sup = len(df) * 0.8
+    min_sup = len(df) * 0.6
     L = apriori(df, min_sup = min_sup)
     res = reduce((lambda x, y: x + y), L)
+    res = list(set(res))
     print(len(res))
     
     '''
-    #if l and res have the same length, then all the frequent pattern generated are correct.
+    #This is test part.
+    #If l and res have the same length, then all the frequent pattern generated are correct.
     
     l = 0
     for each in res:

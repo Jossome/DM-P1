@@ -7,10 +7,10 @@ from copy import deepcopy
 
 class tree:
     def __init__(self, name, trace):
-        self.name = name
-        self.trace = trace
-        self.count = 1
-        self.children = {}
+        self.name = name    #the name of item
+        self.trace = trace  #the prefix path
+        self.count = 1      #the count on this node
+        self.children = {}  #the children
         
 def traverse(T):
     if len(T.children) == 0:
@@ -93,33 +93,33 @@ def get_CFP(CPB, min_sup):
 def recursive(freq1, node_link, min_sup, first = False):
     res = []
 
-    if first: freq1 = freq1[:-1]
-    for item in freq1:
-        CPB = [(x.trace[8:], x.count) for x in node_link[item] if x.trace != '->null']
-        CFP, local_link = get_CFP(CPB, min_sup)
-        print("gaggefaecac", have_single_path(CFP))
-        
-        print("item: ", item)
-        print("CPB : ", CPB)
-        
-        #local de sup_cnt
-        local_cnt = [(each, reduce((lambda x, y: x + y), [i.count for i in local_link[each]])) for each in local_link]
-        #up is right
-        #down dont know what it is.
-        
-        local_key = {name: cnt for name, cnt in local_cnt}
-        print(local_key)
-        local_freq = sorted([x[0] for x in local_cnt if x[1] >= min_sup], key = lambda x: local_key[x])
-        #if len(local_freq) == 0: return [item]
-        print("local_freq : ", local_freq)
-        tmp = recursive(local_freq, local_link, min_sup)
-        if len(tmp) == 0:
-            res.append((item,))
-        else: 
-            for each in tmp:
-                res.append((item,) + each)  #without this one, the tmp will be empty!!!
-
-        print("res[]-1 : ", res[-1])
+    if len(freq1) <= 1:
+        res.append(tuple(freq1))
+    else:
+        for item in freq1[:-1]:
+            CPB = [(x.trace[8:], x.count) for x in node_link[item] if x.trace != '->null']
+            CFP, local_link = get_CFP(CPB, min_sup)
+            have, name = have_single_path(CFP)
+            
+            if have:
+                res.append((name,))
+            
+            #local de sup_cnt
+            local_cnt = [(each, reduce((lambda x, y: x + y), [i.count for i in local_link[each]])) for each in local_link]
+            #up is right
+            #down dont know what it is.
+            
+            local_key = {name: cnt for name, cnt in local_cnt}
+            local_freq = sorted([x[0] for x in local_cnt if x[1] >= min_sup], key = lambda x: local_key[x])
+            tmp = recursive(local_freq, local_link, min_sup)
+            if len(tmp) == 0:
+                res.append((item,))
+            else: 
+                for each in tmp:
+                    res.append((item,) + each) 
+    
+    for i in range(len(res)):
+        res[i] = tuple(sorted(res[i], key = str))
     
     return res
  
@@ -142,11 +142,22 @@ if __name__ == "__main__":
             "marital-status", "occupation", "relationship", "race", "sex",\
             "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
 
-    ttt = fp_growth(df, len(df) * 0.6)
-    print(len(ttt))
-#    for each in ttt:
-#        print(each)
-#        for i in ttt[each]:
-#            print(i.trace, i.count)
-    #traverse(ttt)
+    min_sup = len(df) * 0.6
+    fp = set(fp_growth(df, min_sup))
+    print(len(fp))
+    
+    '''
+    #if l and res have the same length, then all the frequent pattern generated are correct.
+    
+    l = 0
+    for each in res:
+        cnt = 0
+        for _, t in df.iterrows():
+            if all([t[x[0]] == x[1] for x in each]):
+                cnt += 1
+        if cnt > min_sup: l += 1
+    
+    print(l)
+    '''
+    
     print("Runtime:", round(time.time() - start, 2), "seconds.")
