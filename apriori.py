@@ -4,6 +4,7 @@ from itertools import combinations
 from functools import reduce
 import time
 
+
 def find_freq_1_itemset(D):
     tmp = []
     for col in D.columns:
@@ -15,7 +16,7 @@ def find_freq_1_itemset(D):
 def apriori(D, min_sup):
     L = []
     sup_cnt = find_freq_1_itemset(D)
-    
+
     L.append([(x,) for x in sup_cnt.index if sup_cnt[x] >= min_sup])
     while len(L[-1]) > 0:
         C = apriori_gen(L[-1])
@@ -28,7 +29,8 @@ def apriori(D, min_sup):
         Lk = [c for c in C if C[c] >= min_sup]
         L.append(Lk)
     return L
-    
+
+
 def apriori_gen(L):
     C = {}
     for l1 in L:
@@ -40,7 +42,8 @@ def apriori_gen(L):
                 if has_infreq_subset(c, L): pass
                 else: C[c] = 0
     return C
-    
+
+
 def has_infreq_subset(c, L):
     for s in combinations(c, len(c) - 1):  #generate each subset s of c
         if s not in L:
@@ -49,22 +52,23 @@ def has_infreq_subset(c, L):
 
 
 if __name__ == "__main__":
-    
+
     start = time.time()
-    
-    df = pd.read_csv("adult.data", sep = ", ", header = None, engine = "python")
+
+    df = pd.read_csv("adult.data", sep=", ", header=None, engine="python")
     df.columns = ["age", "workclass", "fnlwgt", "education", "education-num",\
             "marital-status", "occupation", "relationship", "race", "sex",\
             "capital-gain", "capital-loss", "hours-per-week", "native-country", "divide"]
 
-    min_sup = len(df) * 0.8
-    L = apriori(df, min_sup = min_sup)
+    min_sup = len(df) * 0.6
+    L = apriori(df, min_sup=min_sup)
     res = reduce((lambda x, y: x + y), L)
     print(len(res))
-    
+    print(res)
+
     '''
     #if l and res have the same length, then all the frequent pattern generated are correct.
-    
+
     l = 0
     for each in res:
         cnt = 0
@@ -72,7 +76,8 @@ if __name__ == "__main__":
             if all([t[x[0]] == x[1] for x in each]):
                 cnt += 1
         if cnt > min_sup: l += 1
-    
+
     print(l)
     '''
+
     print("Runtime:", round(time.time() - start, 2), "seconds.")
